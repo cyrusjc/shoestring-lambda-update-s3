@@ -6,9 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "20"
       - name: Pushing to S3...
         run: |
           aws s3 sync build/ s3://shoestring-lambda-bucket
