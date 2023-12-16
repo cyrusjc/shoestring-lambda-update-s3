@@ -15,3 +15,7 @@ jobs:
           AWS_DEFAULT_REGION: "us-west-2"
       - name: Updating lambda code
         run: aws lambda update-function-code --function-name update-json --s3-bucket shoestring-lambda-bucket --s3-key main.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+          AWS_DEFAULT_REGION: "us-west-2"
