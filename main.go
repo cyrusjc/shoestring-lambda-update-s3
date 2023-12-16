@@ -1,5 +1,3 @@
-// This program uploads
-
 package main
 
 import (

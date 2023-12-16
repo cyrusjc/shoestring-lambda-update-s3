@@ -9,11 +9,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "20"
-      - run: node -v
-      - name: Installing node modules
-        run: npm ci
-      - name: Building...
-        run: npm run build
       - name: Pushing to S3...
         run: |
           aws s3 sync build/ s3://shoestring-lambda-bucket

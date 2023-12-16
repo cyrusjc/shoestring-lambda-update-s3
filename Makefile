@@ -24,11 +24,12 @@ BUILD_FILE ?= main
 check-go:
 	@which go > /dev/null || (echo "Go not found. Please install Go." && exit 1)
 
+.PHONY: build
 build:
 	@go env -w GOOS=$(GOOS)
 	@go env -w GOARCH=$(GOARCH)
 	@go env -w CGO_ENABLED=$(CGO_ENABLED)
-	go build -o $(BUILD_DIR)/${BUILD_FILE} $(GO_FILES)
+	go build -o $(BUILD_DIR)/$(BUILD_FILE) $(GO_FILES)
 
 zip: 
 	@which zip > /dev/null || (echo "zip not found. Please install zip." && exit 1)
@@ -38,7 +39,7 @@ zip:
 BUCKET_NAME ?= shoestring-lambda-bucket
 
 to-s3:
-	aws s3 sync $(BUILD_DIR)/ s3://${BUCKET_NAME} --exclude "*" --include "*.zip"
+	aws s3 sync $(BUILD_DIR)/ s3://$(BUCKET_NAME) --exclude "*" --include "*.zip"
 
 FUNC_NAME ?= update-json 
 BUCKET_NAME ?= shoestring-lambda-bucket
@@ -50,4 +51,4 @@ invoke-lambda:
 	aws lambda invoke --function-name update-json out --log-type Tail --query 'LogResult' --output text |  base64 -d
 
 clean-all:
-	rm -rf $(BUILD_DIR)
+	cd $(BUILD_DIR) && find . ! -name '*.zip' -type f -exec rm -f {} +
