@@ -38,7 +38,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return events.APIGatewayProxyResponse{}, err
 	}
 
-	err = os.WriteFile("userfile.json", body, 0666)
+	err = os.WriteFile("/tmp/dinnerMenu.json", body, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}

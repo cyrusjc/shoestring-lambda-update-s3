@@ -1,0 +1,24 @@
+name: github-updateS3-downloadToLambda
+run-name: ${{ github.actor }} is updating lambda function,
+on: [push]
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: "20"
+    - run: node -v
+    - name: Installing node modules
+      run: npm ci
+    - name: Building...
+      run: npm run build
+    - name: Pushing to S3...
+      run: |
+        aws s3 sync build/ s3://shoestring-lambda-bucket
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+        AWS_DEFAULT_REGION: "us-west-2"
+    - name: Updating lambda code
+    - run: aws lambda update-function-code --function-name update-json --s3-bucket shoestring-lambda-bucket --s3-key main.zip
