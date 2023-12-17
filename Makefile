@@ -18,7 +18,6 @@ BUILD_DIR ?= ./build
 MAIN_DIR ?= ./function
 
 GO_FILES ?= $(shell find . -name '*.go')
-
 BUILD_FILE ?= main
 
 check-go:
@@ -37,18 +36,18 @@ zip:
 
 
 BUCKET_NAME ?= shoestring-lambda-bucket
-
 to-s3:
 	aws s3 sync $(BUILD_DIR)/ s3://$(BUCKET_NAME) --exclude "*" --include "*.zip"
 
 FUNC_NAME ?= update-json 
 BUCKET_NAME ?= shoestring-lambda-bucket
-
 to-lambda:
 	aws lambda update-function-code --function-name ${FUNC_NAME} --s3-bucket ${BUCKET_NAME} --s3-key ${BUILD_FILE}.zip --no-cli-pager
 
 invoke-lambda:
 	aws lambda invoke --function-name update-json out --log-type Tail --query 'LogResult' --output text |  base64 -d
+	rm out
 
 clean-all:
 	cd $(BUILD_DIR) && find . ! -name '*.zip' -type f -exec rm -f {} +
+
