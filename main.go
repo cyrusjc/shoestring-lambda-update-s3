@@ -17,7 +17,18 @@ import (
 )
 
 const Bucket = "shoestring-cafe-react"
-const FileName = "dinnerMenu.json"
+
+type Menu struct {
+	name string
+	url  string
+}
+
+func newMenu(name string, url string) *Menu {
+	return &Menu{
+		name: name,
+		url:  url,
+	}
+}
 
 func exitErrorf(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, msg+"\n", args...)
@@ -25,18 +36,24 @@ func exitErrorf(msg string, args ...interface{}) {
 }
 
 func main() {
-	lambda.Start(handler)
+	lambda.Start(Handler)
 }
 
-func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	chanBlock := make(chan bool)
+	dinner := newMenu("dinner", fmt.Sprintf("%v", os.Getenv("get_url")))
+	lunch := newMenu("lunch", fmt.Sprintf("%v", os.Getenv("get_url_lunch")))
+	opentable := newMenu("opentable", fmt.Sprintf("%v", os.Getenv("get_url_opentable")))
+
+	menus := []*Menu{dinner, lunch, opentable}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go getSheetsDataFunc(chanBlock, &wg)
-	go uploadToS3(chanBlock, &wg)
+	for _, menu := range menus {
+		chanBlock := make(chan bool)
+		wg.Add(2)
+		go getSheetsDataFunc(chanBlock, &wg, menu)
+		go uploadToS3(chanBlock, &wg, menu)
+	}
 
 	wg.Wait()
 
@@ -46,12 +63,13 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func getSheetsDataFunc(chanBlock chan bool, wg *sync.WaitGroup) {
+func getSheetsDataFunc(chanBlock chan bool, wg *sync.WaitGroup, menu *Menu) {
+
+	FileName := menu.name + "Menu.json"
 
 	defer wg.Done()
 
-	var url = os.Getenv("get_url")
-	resp, err := http.Get(fmt.Sprintf("%s", url))
+	resp, err := http.Get(menu.url)
 	if err != nil {
 		log.Println("Error GET request: ", err)
 		os.Exit(0)
@@ -70,7 +88,7 @@ func getSheetsDataFunc(chanBlock chan bool, wg *sync.WaitGroup) {
 		os.Exit(0)
 	}
 
-	err = os.WriteFile("/tmp/dinnerMenu.json", body, 0666)
+	err = os.WriteFile("/tmp/"+FileName, body, 0666)
 	chanBlock <- true
 	if err != nil {
 		log.Fatal(err)
@@ -80,8 +98,9 @@ func getSheetsDataFunc(chanBlock chan bool, wg *sync.WaitGroup) {
 	return
 }
 
-func uploadToS3(chanBlock chan bool, wg *sync.WaitGroup) {
+func uploadToS3(chanBlock chan bool, wg *sync.WaitGroup, menu *Menu) {
 
+	FileName := menu.name + "Menu.json"
 	defer wg.Done()
 
 	sess, err := session.NewSession(&aws.Config{
