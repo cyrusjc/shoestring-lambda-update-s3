@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront"
@@ -37,7 +38,7 @@ func exitErrorf(msg string, args ...interface{}) {
 }
 
 func main() {
-	//lambda.Start(Handler)
+	lambda.Start(Handler)
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -131,7 +132,6 @@ func uploadToS3(chanBlock chan bool, wg *sync.WaitGroup, menu *Menu) {
 
 	if err != nil {
 		exitErrorf("Unable to upload %q to %q, %v", FileName, Bucket, err)
-		os.Exit(0)
 	}
 
 }
