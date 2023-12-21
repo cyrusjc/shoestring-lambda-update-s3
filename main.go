@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudfront"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
@@ -36,7 +37,7 @@ func exitErrorf(msg string, args ...interface{}) {
 }
 
 func main() {
-	lambda.Start(Handler)
+	//lambda.Start(Handler)
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -56,6 +57,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	wg.Wait()
+
+	err := invalidateCloudfront()
+	if err != nil {
+		log.Println("Error GET request: ", err)
+		os.Exit(0)
+	}
 
 	return events.APIGatewayProxyResponse{
 		Body:       fmt.Sprintf("Success!"),
@@ -126,5 +133,37 @@ func uploadToS3(chanBlock chan bool, wg *sync.WaitGroup, menu *Menu) {
 		exitErrorf("Unable to upload %q to %q, %v", FileName, Bucket, err)
 		os.Exit(0)
 	}
+
+}
+
+func invalidateCloudfront() error {
+	now := time.Now()
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2")},
+	)
+	// Example sending a request using the CreateInvalidationRequest method.
+	svc := cloudfront.New(sess)
+
+	params := &cloudfront.CreateInvalidationInput{
+		DistributionId: aws.String(fmt.Sprintf("%v", os.Getenv("DIST_ID"))),
+		InvalidationBatch: &cloudfront.InvalidationBatch{
+			CallerReference: aws.String(
+				fmt.Sprintf("goinvali%s", now.Format("2006/01/02,15:04:05"))),
+			Paths: &cloudfront.Paths{
+				Quantity: aws.Int64(1),
+				Items: []*string{
+					aws.String("/*"),
+				},
+			},
+		},
+	}
+
+	req, _ := svc.CreateInvalidationRequest(params)
+	err := req.Send()
+	if err == nil { // resp is now filled
+		return fmt.Errorf("%v", err)
+	}
+
+	return nil
 
 }
