@@ -9,3 +9,5 @@ Github actions is used for CI/CD and automatically updates the lambda function r
 #TODO
 
 Github actions to install GO and build on the container vs pushing a .zip onto the repository and uploading to S3 via AWS CLI
+
+Implement retries on failure instead of exiting

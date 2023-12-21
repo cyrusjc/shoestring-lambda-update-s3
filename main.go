@@ -158,11 +158,13 @@ func invalidateCloudfront() error {
 		},
 	}
 
-	req, _ := svc.CreateInvalidationRequest(params)
+	req, resp := svc.CreateInvalidationRequest(params)
 	err := req.Send()
 	if err == nil { // resp is now filled
 		return fmt.Errorf("%v", err)
 	}
+
+	fmt.Println(resp)
 
 	return nil
 
