@@ -138,10 +138,13 @@ func uploadToS3(chanBlock chan bool, wg *sync.WaitGroup, menu *Menu) {
 
 func invalidateCloudfront() error {
 	now := time.Now()
-	sess, _ := session.NewSession(&aws.Config{
+	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2")},
 	)
-	// Example sending a request using the CreateInvalidationRequest method.
+
+	if err != nil {
+		return fmt.Errorf("ERROR RECIEVED %V", err)
+	}
 	svc := cloudfront.New(sess)
 
 	params := &cloudfront.CreateInvalidationInput{
