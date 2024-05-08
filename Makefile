@@ -1,11 +1,11 @@
-# The following make will build go binary and upload it to S3. 
+# The following make will build go binary and upload it to S3.    
 # Then lambda will download the .zip from S3 and update the code
 # Lambda function will then be invoked and dinnerMenu.json will be updated
 
 all: compile upload call
 
 compile: check-go build zip
-upload:compile to-s3 to-lambda invoke-lambda call clean
+upload:compile to-s3 to-lambda call clean
 call: invoke-lambda 
 
 clean: clean-all
@@ -45,7 +45,7 @@ to-lambda:
 	aws lambda update-function-code --function-name ${FUNC_NAME} --s3-bucket ${BUCKET_NAME} --s3-key ${BUILD_FILE}.zip --no-cli-pager
 
 invoke-lambda:
-	aws lambda invoke --function-name update-json out --log-type Tail --query 'LogResult' --output text |  base64 -d
+	aws lambda invoke --function-name ${FUNC_NAME} out --log-type Tail --query 'LogResult' --output text |  base64 -d
 	rm out
 
 clean-all:

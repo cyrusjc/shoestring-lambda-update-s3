@@ -45,9 +45,9 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	dinner := newMenu("dinner", fmt.Sprintf("%v", os.Getenv("get_url")))
 	lunch := newMenu("lunch", fmt.Sprintf("%v", os.Getenv("get_url_lunch")))
-	opentable := newMenu("opentable", fmt.Sprintf("%v", os.Getenv("get_url_opentable")))
+	special := newMenu("special", fmt.Sprintf("%v", os.Getenv("get_url_special")))
 
-	menus := []*Menu{dinner, lunch, opentable}
+	menus := []*Menu{dinner, lunch, special}
 
 	var wg sync.WaitGroup
 	for _, menu := range menus {
